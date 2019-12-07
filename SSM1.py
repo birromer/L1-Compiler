@@ -131,7 +131,6 @@ class SSM1:
     while not (self.code == [] and self.dump== []):
       self.step()
     
-    print(self.stack)
     return self.stack.pop(0)
 
 
