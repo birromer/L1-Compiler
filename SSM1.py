@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
-
 class SSM1:
   def __init__(self):
     self.code  = []
     self.stack = [] 
-    self.env   = []
+    self.env   = {}
     self.dump  = []
     
   def step(self):
@@ -100,9 +98,9 @@ class SSM1:
       self.dump.insert(0, top_dump)
   
       if clos[0] == "CLOS":
-        new_env  = clos[0]
-        new_var  = clos[1]
-        new_code = clos[2]
+        new_env  = clos[1]
+        new_var  = clos[2]
+        new_code = clos[3]
 
         self.code  = new_code
         self.stack = []
@@ -110,10 +108,10 @@ class SSM1:
         self.env[new_var] = sv
         
       elif clos[0] == "RCLOS":
-        new_env  = clos[0]
-        new_func = clos[1]
-        new_var  = clos[2]
-        new_code = clos[3]
+        new_env  = clos[1]
+        new_func = clos[2]
+        new_var  = clos[3]
+        new_code = clos[4]
         
         self.code = new_code
         self.stack = []
@@ -129,13 +127,12 @@ class SSM1:
     while not (self.code == [] and self.code == []):
       self.step()
     
+    print(self.stack)
     return self.stack.pop(0)
-      
-if __name__ == "__main__":
-  ssm1 = SSM1()
-  
-  code = compileSSM1(('let', 'x', 'int', ('+', 3, ('+', 3, 4)), ('if', True, True, False)))
-  res = ssm1.run(code)
-  
-  print(res
 
+ssm1 = SSM1()
+
+code = compileSSM1(('let', 'x', 'int', ('+', 3, ('+', 3, 4)), ('if', True, True, False)))
+res = ssm1.run(code)
+
+print(res)
