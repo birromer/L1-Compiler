@@ -20,6 +20,7 @@ class SSM1:
       self.stack.insert(0, sv) 
     
     instruction = self.code.pop(0)
+    
     if instruction[0] == "INT":
       self.stack.insert(0, instruction)
 
@@ -28,6 +29,11 @@ class SSM1:
 
     elif instruction[0] == "POP":
       self.stack.pop(0)
+      
+    elif instruction[0] == "COPY":
+      sv = self.stack.pop(0)
+      self.stack.insert(0, sv)
+      self.stack.insert(0, sv)
     
     elif instruction[0] == "ADD":
       value1 = self.stack.pop(0)
@@ -50,12 +56,8 @@ class SSM1:
 
     elif instruction[0] == "AND":
       value1 = self.stack.pop(0)
-      if value1 == False:
-        self.stack.pop(0)
-        self.stack.insert(0, ("BOOL", False))
-      else:
-        value2 = self.stack.pop(0)
-        self.stack.insert(0, ("BOOL", value1[1] and value2[1]))
+      value2 = self.stack.pop(0)
+      self.stack.insert(0, ("BOOL", value1[1] and value2[1]))
 
     elif instruction[0] == "NOT":
       value = self.stack.pop(0)
@@ -78,7 +80,7 @@ class SSM1:
           i += 1  
 
     elif instruction[0] == "VAR":
-      op = self.code.pop(0)
+      op = instruction[1]
       value = self.enviroment[op]
       self.stack.insert(0, value)
 
@@ -132,7 +134,19 @@ class SSM1:
 
 ssm1 = SSM1()
 
-code = compileSSM1(('let', 'x', 'int', ('+', 3, ('+', 3, 4)), ('if', True, True, False)))
-res = ssm1.run(code)
+code = [('INT', 4),
+        ('INT', 3),
+        ('ADD',),
+        ('INT', 3),
+        ('ADD',),
+        ('FUN',
+         'x',
+         [('BOOL', True),
+          ('JMPIFTRUE', 2),
+          ('BOOL', False),
+          ('JUMP', 1),
+          ('BOOL', True)]),
+        ('APPLY',)]
 
+res = ssm1.run(code)
 print(res)
