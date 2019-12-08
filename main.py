@@ -8,6 +8,8 @@ Created on Sun Dec  8 15:12:39 2019
 
 from install import install_packages
 from types import type_infer
+from compiler import compileSSM1
+from SSM1 import SSM1
 
 from lark import Lark
 from lark import exceptions
