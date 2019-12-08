@@ -5,7 +5,7 @@ class SSM1:
     self.env   = {}
     self.dump  = []
     
-  def step(self):
+  def step(self, verbose=False):
     
     if self.code == [] and self.dump != []:
       to_restore = self.dump.pop(0) 
@@ -20,12 +20,11 @@ class SSM1:
       self.stack.insert(0, sv) 
     
     else:
-    
       instruction = self.code.pop(0)
       
       if instruction[0] == "INT":
         self.stack.insert(0, instruction)
-  
+
       elif instruction[0] == "BOOL":
         self.stack.insert(0, instruction)
   
@@ -44,7 +43,8 @@ class SSM1:
   
       elif instruction[0] == "INV":
         value = self.stack.pop(0)
-        self.stack.insert(0, ("INT", -value))
+        
+        self.stack.insert(0, ("INT", -value[1]))
   
       elif instruction[0] == "EQ":
         value1 = self.stack.pop(0)
@@ -68,22 +68,22 @@ class SSM1:
       elif instruction[0] == "JUMP":
         i = 1
         n = instruction[1]
-        while i < n:
+        while i <= n:
           self.code.pop(0)
           i += 1
   
-      elif instruction[0] == "JUMPIFTRUE":
+      elif instruction[0] == "JMPIFTRUE":
         value = self.stack.pop(0)
-        if value == True:
+        if value[1] == True:
           i = 1
           n = instruction[1]
           while i <= n:
             self.code.pop(0)
-            i += 1  
+            i += 1
   
       elif instruction[0] == "VAR":
         op = instruction[1]
-        value = self.enviroment[op]
+        value = self.env[op]
         self.stack.insert(0, value)
   
       elif instruction[0] == "FUN":
@@ -112,7 +112,7 @@ class SSM1:
           self.env[new_var] = sv
           
         elif clos[0] == "RCLOS":
-          new_env  = clos[1]
+          new_env  = clos[1].copy()
           new_func = clos[2]
           new_var  = clos[3]
           new_code = clos[4]
@@ -121,35 +121,20 @@ class SSM1:
           self.stack = []
           self.env = new_env
           self.env[new_var] = sv
-          self.env[new_func] = ("RCLOS", new_env, new_func, new_var, new_code)
+          self.env[new_func] = clos
           
         else:
-          print("deu bem ruim")
+          print("Something went really wrong :(")
+
       
-  def run(self, code):
+  def run(self, code, verbose=False):
     self.code = code
     while not (self.code == [] and self.dump== []):
       self.step()
-    
+      if verbose:
+        print("\nCurrent code:", self.code)
+        print("Current stack:", self.stack)
+        print("Current environment:", self.env)
+        print("Current dump:", self.dump)
+
     return self.stack.pop(0)
-
-
-if __name__ == "__main__":
-  ssm1 = SSM1()
-  
-  code = [('INT', 4),
-          ('INT', 3),
-          ('ADD',),
-          ('INT', 3),
-          ('ADD',),
-          ('FUN',
-           'x',
-           [('BOOL', True),
-            ('JMPIFTRUE', 2),
-            ('BOOL', False),
-            ('JUMP', 1),
-            ('BOOL', True)]),
-          ('APPLY',)]
-  
-  res = ssm1.run(code)
-  print(res)
