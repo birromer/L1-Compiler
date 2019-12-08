@@ -138,3 +138,146 @@ class SSM1:
         print("Current dump:", self.dump)
 
     return self.stack.pop(0)
+  
+  
+if __name__ == "__main__":
+  ssm1 = SSM1()
+
+  class State:
+    def __init__(self, code, stack, env, dump):
+      self.code = code
+      self.stack = stack
+      self.env = env
+      self.dump = dump
+  
+  def test_result(test_case, expected, verbose=False):
+    if test_case.code:
+      inst = test_case.code[0][0]
+    else:
+      inst = 'DUMP'
+  
+    ssm1.code  = test_case.code
+    ssm1.stack = test_case.stack
+    ssm1.env   = test_case.env
+    ssm1.dump  = test_case.dump
+  
+    ssm1.step() 
+    
+    code_check  = ssm1.code  == expected.code
+    stack_check = ssm1.stack == expected.stack
+    env_check   = ssm1.env   == expected.env
+    dump_check  = ssm1.dump  == expected.dump
+  
+    if verbose:
+      print("\nSSM1")
+      print(ssm1.code)
+      print(ssm1.stack)
+      print(ssm1.env)
+      print(ssm1.dump)
+      print("\nExpected")
+      print(expected.code)
+      print(expected.stack)
+      print(expected.env)
+      print(expected.dump,"\n")
+      if ssm1.code != expected.code:
+        print("Error in code")
+      if ssm1.stack != expected.stack:
+        print("Error in stack")
+      if ssm1.env != expected.env:
+        print("Error in Environment")
+      if ssm1.dump != expected.dump:
+        print("Error in dump")
+  
+    if code_check and stack_check and env_check and dump_check:
+      print("Test {} passed".format(inst))
+    else:
+      print("Test {} failed".format(inst))
+    
+  
+  # INT
+  test0 = State( [("INT", 0)], [], {}, [] )
+  test_result(test0, State( [], [("INT", 0)], {}, [] ) )
+  
+  # BOOL
+  testTrue = State( [("BOOL", True)], [], {}, [] )
+  test_result(testTrue, State( [], [("BOOL", True)], {}, []) ) 
+  
+  # POP
+  testPop = State( [("POP", )], [("INT", 1)],  {}, [] )
+  test_result(testPop, State( [], [], {}, []) ) 
+  
+  # COPY
+  testCopy = State( [("COPY", )], [("INT", 1)],  {}, [] )  
+  test_result(testCopy, State([], [("INT", 1), ("INT", 1)], {}, []) ) 
+  
+  # ADD
+  testSum = State( [("ADD", )], [("INT", 1), ("INT", 10)], {}, [])
+  test_result(testSum , State( [], [("INT", 11)], {}, [] ) )
+  
+  # INV
+  testInv = State( [("INV",)], [("INT", 1)], {}, [] )
+  test_result(testInv, State ([], [("INT", -1)], {}, []))
+  
+  # EQ1
+  testEq1 = State( [("EQ",)], [("BOOL", True), ("BOOL", True)], {}, [] )
+  test_result(testEq1, State ([], [("BOOL", True)], {}, []))
+  
+  # EQ2
+  testEq2 = State( [("EQ",)], [("BOOL", False), ("BOOL", True)], {}, [] )
+  test_result(testEq2, State ([], [("BOOL", False)], {}, []))
+  
+  # GT1
+  testGt1 = State( [("GT",)], [("INT", 1), ("INT", 0)], {}, [] )
+  test_result(testGt1, State ([], [("BOOL", True)], {}, []))
+  
+  # GT2
+  testGt2 = State( [("GT",)], [("INT", 0), ("INT", 1)], {}, [] )
+  test_result(testGt2, State ([], [("BOOL", False)], {}, []))
+  
+  # AND1
+  testAnd1 = State( [("AND", )], [("BOOL", True), ("BOOL", True)], {}, [] )
+  test_result(testAnd1, State ([], [("BOOL", True)], {}, []))
+  
+  # AND2
+  testAnd2 = State( [("AND", )], [("BOOL", False), ("BOOL", True)], {}, [] )
+  test_result(testAnd2, State ([], [("BOOL", False)], {}, []))
+  
+  # NOT
+  testNot = State( [("NOT", )], [("BOOL", True)], {}, [] )
+  test_result(testNot, State ([], [("BOOL", False)], {}, []))
+  
+  # JUMP
+  testJump = State( [("JUMP", 2), ("INT", 1,), ("INT", 2), ("INT", 3)], [], {}, [] )
+  test_result(testJump, State ([("INT", 3)], [], {}, []))
+  
+  # JMPIFTRUE1
+  testIf1 = State( [("JMPIFTRUE", 2), ("INT", 1), ("INT", 2), ("INT", 3)], [("BOOL", True)], {}, [])
+  test_result(testIf1, State( [("INT", 3)], [], {}, [] ))
+  
+  # JMPIFTRUE2
+  testIf2 = State( [("JMPIFTRUE", 2), ("INT", 1), ("INT", 2), ("INT", 3)], [("BOOL", False)], {}, [])
+  test_result(testIf2, State( [("INT", 1), ("INT", 2), ("INT", 3)], [], {}, [] ))
+  
+  # VAR
+  testVar = State( [("VAR", 'x')], [], {'x': ("INT", 10)}, [] )
+  test_result(testVar, State ([], [("INT", 10)], {'x': ("INT", 10)}, []))
+  
+  # FUN
+  testFun = State( [("FUN", 'x', [("INT", 2)] )], [], {'x' : ("BOOL", True)}, [] )
+  test_result(testFun, State ([], [("CLOS", {'x' : ("BOOL", True)}, 'x', [("INT", 2)])], {'x' : ("BOOL", True)}, []))
+  
+  # RFUN
+  testRfun = State( [("RFUN", 'f', 'x', [("INT", 2)])], [], {}, [] )
+  test_result(testRfun, State ([], [("RCLOS", {}, 'f', 'x', [("INT", 2)])], {}, []))
+  
+  # APPLY1
+  testApply1 = State( [("APPLY",)], [("CLOS", {'x' : ("BOOL", True)}, 'z', [("INT", 2)]), ("BOOL", False), ("INT", 42)], {'y': ("INT", 10)}, [] )
+  test_result(testApply1, State ([("INT", 2)], [], {'x' : ("BOOL", True), 'z' : ("BOOL", False)}, [([], [("INT", 42)], {'y': ("INT", 10)})]) )
+  
+  # APPLY2
+  testApply2 = State( [("APPLY",), ("COPY", )], [("RCLOS", {'x' : ("BOOL", True)}, 'f', 'z', [("INT", 45), ("BOOL", False)]), ("INT", -99), ("INT", 2)], {'s' : ("INT", 60)}, [] )
+  test_result(testApply2, State ([("INT", 45), ("BOOL", False)], [], {'x' : ("BOOL", True), 'z' : ("INT", -99), 'f': ("RCLOS", {'x' : ("BOOL", True)}, 'f', 'z', [("INT", 45), ("BOOL", False)])}, [([("COPY", )], [("INT", 2)], {'s' : ("INT", 60)})] ))
+  
+  # DUMP
+  testDump = State( [], [("INT", 100)], {}, [ ([("POP",)], [("BOOL", True)], {'x': ("INT", 32)}) ] )
+  test_result(testDump, State ([("POP",)], [("INT", 100), ("BOOL", True)], {'x': ("INT", 32)}, []))
